@@ -23,10 +23,13 @@ fn main() {
             Ok(_) => {
                 let mut results = search_imdb(&input).into_vec();
                 results.dedup();
-                for res in results {
-                    let (rating, result) = res.into_pair();
-                    println!("{} {:?}", rating, result.title().title);
-                }
+                let res = results.first().unwrap().clone();
+                let (rating, result) = res.into_pair();
+                let title = result.title();
+                println!(
+                    "Highest ranking result:\n{} {} {} https://www.imdb.com/title/{}/\n",
+                    rating, title.title, title.genres, title.id
+                );
             }
             Err(error) => println!("error: {}", error),
         }
@@ -34,11 +37,11 @@ fn main() {
 }
 
 fn search_imdb(query: &str) -> SearchResults<MediaEntity> {
-    println!("starting search with {:}", query);
-    let z: Query = Query::new().name(query);
+    println!("starting search with {}", query);
+    let q: Query = Query::new().name(query);
     let data_dir: &Path = Path::new("./data/");
     let index_dir: &Path = Path::new("./index/");
     let opened_index = Index::open(data_dir, index_dir).unwrap();
     let mut searcher = Searcher::new(opened_index);
-    searcher.search(&z).unwrap()
+    searcher.search(&q).unwrap()
 }
