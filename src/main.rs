@@ -2,7 +2,7 @@ extern crate imdb_index;
 
 mod download;
 
-use imdb_index::{Index, IndexBuilder, MediaEntity, Query, SearchResults, Searcher};
+use imdb_index::{Index, IndexBuilder, MediaEntity, Query, Rating, SearchResults, Searcher};
 use std::fs;
 use std::io;
 use std::path::Path;
@@ -22,14 +22,42 @@ fn main() {
         match io::stdin().read_line(&mut input) {
             Ok(_) => {
                 let mut results = search_imdb(&input).into_vec();
-                results.dedup();
-                let res = results.first().unwrap().clone();
-                let (rating, result) = res.into_pair();
+                //results.dedup();
+                //let valid = results
+                //    .into_iter()
+                //    .filter(|res| res.clone().into_pair().1.rating().is_some());
+                let temp = Rating {
+                    id: String::from("X"),
+                    rating: 0.0,
+                    votes: 0,
+                };
+
+                results.sort_by(|a, b| {
+                    a.value()
+                        .rating()
+                        .unwrap_or(&temp)
+                        .votes
+                        .cmp(&b.value().rating().unwrap_or(&temp).votes)
+                });
+                /*
+                let v = results.last().unwrap().clone();
+                let (rating, result) = v.into_pair();
                 let title = result.title();
+                let r = result.rating().unwrap_or(&temp);
                 println!(
-                    "Highest ranking result:\n{} {} {} https://www.imdb.com/title/{}/\n",
-                    rating, title.title, title.genres, title.id
+                    "{} {} {} {} https://www.imdb.com/title/{}/\n",
+                    rating, title.title, title.genres, r.votes, title.id
                 );
+                */
+                for res in results {
+                    let (rating, result) = res.into_pair();
+                    let title = result.title();
+                    let r = result.rating().unwrap_or(&temp);
+                    println!(
+                        "{} {} {} {} https://www.imdb.com/title/{}/\n",
+                        rating, title.title, title.genres, r.votes, title.id
+                    );
+                }
             }
             Err(error) => println!("error: {}", error),
         }
